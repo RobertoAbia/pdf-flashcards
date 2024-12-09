@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import CreateMethodSelector from './CreateMethodSelector';
+import PdfFlashcardGenerator from './PdfFlashcardGenerator';
 
 interface CreateFlashcardFormProps {
   onSubmit: (unit: string, front: string, back: string) => void;
@@ -17,9 +19,16 @@ export default function CreateFlashcardForm({
   initialFront = '',
   initialBack = ''
 }: CreateFlashcardFormProps) {
+  const [showMethodSelector, setShowMethodSelector] = useState(true);
+  const [creationMethod, setCreationMethod] = useState<'manual' | 'pdf' | null>(null);
   const [unit, setUnit] = useState(initialUnit);
   const [front, setFront] = useState(initialFront);
   const [back, setBack] = useState(initialBack);
+
+  const handleMethodSelect = (method: 'manual' | 'pdf') => {
+    setCreationMethod(method);
+    setShowMethodSelector(false);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +38,32 @@ export default function CreateFlashcardForm({
     }
     onSubmit(unit, front, back);
   };
+
+  const handleCreateFlashcardsFromPdf = (unit: string, flashcards: Array<{ front: string; back: string }>) => {
+    // Por ahora, solo crearemos la primera flashcard
+    if (flashcards.length > 0) {
+      const firstCard = flashcards[0];
+      onSubmit(unit, firstCard.front, firstCard.back);
+    }
+  };
+
+  if (showMethodSelector) {
+    return (
+      <CreateMethodSelector
+        onSelectMethod={handleMethodSelect}
+        onClose={onClose}
+      />
+    );
+  }
+
+  if (creationMethod === 'pdf') {
+    return (
+      <PdfFlashcardGenerator
+        onSubmit={handleCreateFlashcardsFromPdf}
+        onClose={onClose}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -91,13 +126,13 @@ export default function CreateFlashcardForm({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all"
+              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all"
+              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               {initialFront ? 'Guardar cambios' : 'Crear tarjeta'}
             </button>
