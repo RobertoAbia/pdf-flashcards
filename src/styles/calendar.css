@@ -1,0 +1,645 @@
+/* Estilos personalizados para el calendario */
+.rbc-calendar {
+  font-family: 'Inter', sans-serif;
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 1.5rem;
+}
+
+/* Header del calendario */
+.rbc-toolbar {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: linear-gradient(to right, #f8fafc, #f1f5f9);
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.rbc-toolbar-label {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  flex-grow: 1;
+  text-align: center;
+  text-transform: capitalize;
+}
+
+/* Grupo de botones de navegación */
+.rbc-btn-group {
+  display: flex;
+  gap: 0.5rem;
+  background: white;
+  padding: 0.25rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.rbc-btn-group:first-child {
+  background: linear-gradient(to right, #f1f5f9, #e2e8f0);
+}
+
+.rbc-btn-group button {
+  color: #475569;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  background: transparent;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.rbc-btn-group button:hover {
+  color: #1e293b;
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.rbc-btn-group button.rbc-active {
+  background: #6366f1;
+  color: white;
+}
+
+/* Efectos de hover y active para los botones */
+.rbc-btn-group button:active {
+  transform: translateY(1px);
+}
+
+/* Botones de navegación (anterior, siguiente, hoy) */
+.rbc-btn-group:first-child button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0 1rem;
+  font-weight: 600;
+}
+
+.rbc-btn-group:first-child button:hover {
+  background: white;
+  color: #6366f1;
+}
+
+/* Selector de vistas (mes, semana, día) */
+.rbc-btn-group:last-child {
+  background: white;
+  padding: 0.25rem;
+}
+
+.rbc-btn-group:last-child button {
+  position: relative;
+  padding: 0.5rem 1.25rem;
+}
+
+.rbc-btn-group:last-child button.rbc-active::before {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+}
+
+/* Animaciones */
+.rbc-btn-group button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rbc-btn-group button:hover {
+  transform: translateY(-1px);
+}
+
+.rbc-btn-group button:active {
+  transform: translateY(0);
+}
+
+/* Vista mensual */
+.rbc-month-view {
+  border: 1px solid #e2e8f0;
+  background: white;
+}
+
+.rbc-month-header {
+  background: #f8fafc;
+}
+
+.rbc-header {
+  padding: 8px !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  border-right: 1px solid #e2e8f0 !important;
+  text-transform: none !important;
+  text-align: center !important;
+}
+
+.rbc-header span {
+  display: block;
+  padding: 4px 0;
+}
+
+.rbc-month-row {
+  min-height: 100px;
+}
+
+.rbc-date-cell {
+  padding: 8px !important;
+  text-align: center !important;
+  color: #1e293b !important;
+}
+
+.rbc-off-range-bg {
+  background-color: #f8fafc !important;
+}
+
+.rbc-off-range {
+  color: #94a3b8 !important;
+}
+
+.rbc-today {
+  background-color: #f1f5f9 !important;
+}
+
+.rbc-header {
+  padding: 0.75rem 0.5rem !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  border-bottom: none !important;
+  text-align: center;
+}
+
+.rbc-month-header .rbc-header,
+.rbc-time-header-content .rbc-header {
+  flex: 1;
+  min-width: 0;
+}
+
+.rbc-header span {
+  display: inline-block !important;
+}
+
+.rbc-header span:not(:first-child) {
+  display: inline !important;
+}
+
+.rbc-header:first-child {
+  border-left: none;
+}
+
+.rbc-month-row {
+  border-top: none;
+  min-height: 100px;
+}
+
+.rbc-date-cell {
+  padding: 0.5rem;
+  text-align: center;
+  font-size: 1rem;
+  color: #1e293b;
+}
+
+.rbc-off-range-bg {
+  background-color: #f8fafc;
+}
+
+.rbc-off-range {
+  color: #94a3b8;
+}
+
+.rbc-today {
+  background-color: #f1f5f9;
+}
+
+.rbc-day-bg {
+  border-left: 1px solid #e2e8f0;
+}
+
+.rbc-day-bg:first-child {
+  border-left: none;
+}
+
+/* Vista semanal */
+.rbc-time-view {
+  border: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.rbc-time-header {
+  border: none;
+  background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+  min-height: auto !important;
+}
+
+.rbc-time-header-content {
+  border-left: none !important;
+}
+
+.rbc-time-header-gutter-all {
+  width: 75px !important;
+  border-right: 1px solid #e2e8f0;
+  background: linear-gradient(to right, #f8fafc, #f1f5f9);
+}
+
+.rbc-time-gutter-all {
+  width: 75px !important;
+}
+
+.rbc-time-header .rbc-header {
+  border-left: 1px solid #e2e8f0;
+}
+
+.rbc-time-header .rbc-header:first-child {
+  border-left: none;
+}
+
+.rbc-allday-cell {
+  display: none;
+}
+
+.rbc-time-content {
+  border: none;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+}
+
+.rbc-time-content > * + * > * {
+  border-left: 1px solid #e2e8f0;
+}
+
+.rbc-time-content > * + * > *:first-child {
+  border-left: none;
+}
+
+.rbc-time-header-gutter {
+  background: linear-gradient(to right, #f8fafc, #f1f5f9);
+  border-right: 1px solid #e2e8f0;
+  width: 75px !important;
+}
+
+.rbc-time-gutter {
+  width: 75px !important;
+}
+
+.rbc-timeslot-group {
+  border-bottom: 1px solid #f1f5f9;
+  min-height: 60px;
+}
+
+.rbc-time-gutter.rbc-time-column {
+  background: linear-gradient(to right, #f8fafc, #f1f5f9);
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding-right: 0.75rem;
+}
+
+.rbc-day-slot {
+  border-right: 1px solid #e2e8f0;
+}
+
+.rbc-day-slot:last-child {
+  border-right: none;
+}
+
+.rbc-time-view .rbc-header {
+  border-bottom: none;
+  border-left: 1px solid #e2e8f0;
+}
+
+.rbc-time-view .rbc-header:first-child {
+  border-left: none;
+}
+
+.rbc-day-slot .rbc-time-slot {
+  border-top: 1px solid #f1f5f9;
+}
+
+/* Eventos */
+.rbc-event {
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+}
+
+.rbc-event.completed {
+  background: linear-gradient(135deg, #10b981, #34d399);
+}
+
+.rbc-event-content {
+  font-weight: 500;
+}
+
+/* Hora actual */
+.rbc-current-time-indicator {
+  background-color: #ef4444;
+  height: 2px;
+}
+
+/* Eventos en vista semanal */
+.rbc-event {
+  border: none;
+  padding: 0.25rem 0.5rem;
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  border-radius: 0.375rem;
+  color: white;
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+  transition: all 0.2s ease;
+}
+
+.rbc-event.completed {
+  background: linear-gradient(135deg, #10b981, #34d399);
+}
+
+.rbc-event:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 4px 6px rgba(99, 102, 241, 0.3);
+}
+
+.rbc-event-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.rbc-event-content {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Día actual */
+.rbc-today {
+  background-color: #fafafa !important;
+}
+
+.rbc-time-view .rbc-today {
+  position: relative;
+}
+
+.rbc-time-view .rbc-today::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(to right, #6366f1, #818cf8);
+  opacity: 0.5;
+}
+
+/* Selección de tiempo */
+.rbc-time-slot {
+  transition: background-color 0.2s ease;
+}
+
+.rbc-time-slot:hover {
+  background-color: rgba(99, 102, 241, 0.05);
+}
+
+/* Scroll personalizado */
+.rbc-time-content {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.rbc-time-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rbc-time-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.rbc-time-content::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 3px;
+}
+
+/* Hover sobre eventos */
+.rbc-event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(99, 102, 241, 0.3);
+}
+
+/* Modal personalizado */
+.calendar-modal {
+  animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estilos para el encabezado personalizado */
+.rbc-time-header-cell {
+  display: flex;
+  width: 100%;
+}
+
+.rbc-time-header-cell .rbc-header {
+  flex: 1;
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  border-left: 1px solid #e2e8f0;
+  font-size: 0.875rem;
+  min-width: 0;
+}
+
+.rbc-time-header-cell .rbc-time-header-gutter {
+  flex: none;
+  width: 75px !important;
+  border-right: 1px solid #e2e8f0;
+  background: linear-gradient(to right, #f8fafc, #f1f5f9);
+}
+
+.rbc-days-header {
+  display: flex;
+  width: 100%;
+}
+
+.rbc-days-header .rbc-header {
+  flex: 1;
+  text-align: center;
+  padding: 0.75rem;
+  font-weight: 600;
+  color: #1e293b;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .rbc-toolbar {
+    flex-direction: column;
+    padding: 0.75rem;
+  }
+
+  .rbc-toolbar-label {
+    font-size: 1.25rem;
+    margin: 0.5rem 0;
+  }
+
+  .rbc-btn-group {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .rbc-btn-group button {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+  }
+}
+
+.calendar-container {
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 8px;
+  max-width: 320px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.calendar-header {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.calendar-header button {
+  background: white;
+  border: 1px solid #e2e8f0;
+  font-size: 0.75rem;
+  color: #70757a;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.calendar-header button:hover {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+.calendar-header h2 {
+  font-size: 1rem;
+  color: #3c4043;
+  font-weight: 500;
+  text-transform: capitalize;
+  text-align: center;
+  min-width: 140px;
+}
+
+/* Tabla del calendario */
+.calendar-container table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 4px;
+  background: white;
+}
+
+/* Encabezados de días */
+.calendar-container th {
+  padding: 2px 1px;
+  font-weight: 500;
+  color: #70757a;
+  font-size: 0.65rem;
+  letter-spacing: 0.4px;
+  border-bottom: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Celdas de días */
+.calendar-container td {
+  height: 35px;
+  border: 1px solid #f1f5f9;
+  border-top: none;
+  vertical-align: middle;
+  padding: 0;
+  position: relative;
+  transition: all 0.2s ease;
+  background: white;
+  text-align: center;
+  width: calc(100% / 7);
+}
+
+.calendar-container td:first-child {
+  border-left: none;
+}
+
+.calendar-container td:last-child {
+  border-right: none;
+}
+
+/* Números de días */
+.calendar-container td span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-weight: 400;
+  color: #3c4043;
+  transition: all 0.2s ease;
+  font-size: 0.75rem;
+  margin: 0 auto;
+}
+
+/* Día actual */
+.calendar-container td span.current-day {
+  background: #1a73e8;
+  color: white;
+  font-weight: 500;
+}
+
+/* Días fuera del mes actual */
+.calendar-container td.outside-month {
+  background: #fafafa;
+}
+
+.calendar-container td.outside-month span {
+  color: #cbd5e1;
+}
+
+/* Efecto hover en los números */
+.calendar-container td span:hover {
+  background: #e2e8f0;
+  cursor: pointer;
+}
