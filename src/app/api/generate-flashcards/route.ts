@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(arrayBuffer);
 
     // Extraer texto del PDF usando pdf2json
-    const pdfParser = new PDFParser(null, 1);
+    const pdfParser = new PDFParser();
     
     const text = await new Promise((resolve, reject) => {
       pdfParser.on('pdfParser_dataReady', () => {
