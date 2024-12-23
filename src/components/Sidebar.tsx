@@ -11,12 +11,12 @@ const Sidebar = () => {
     {
       name: 'Inicio',
       icon: HomeIcon,
-      href: '/',
+      href: '/flashcards',
     },
     {
       name: 'Unidades',
       icon: BookOpenIcon,
-      href: '/flashcards',
+      href: '/units',
     },
     {
       name: 'Pomodoro',
@@ -36,7 +36,9 @@ const Sidebar = () => {
         <h1 className="text-2xl font-bold text-gray-800 mb-8">PDF Flashcards</h1>
         <nav className="space-y-2">
           {menuItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = item.href === '/flashcards' 
+              ? pathname === '/flashcards'
+              : pathname === item.href;
             return (
               <Link
                 key={item.name}

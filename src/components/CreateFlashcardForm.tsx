@@ -1,140 +1,102 @@
 'use client';
 
 import { useState } from 'react';
-import CreateMethodSelector from './CreateMethodSelector';
-import PdfFlashcardGenerator from './PdfFlashcardGenerator';
+import { useFlashcardStore } from '@/store/flashcards';
 
 interface CreateFlashcardFormProps {
-  onSubmit: (unit: string, front: string, back: string) => void;
+  unitId: string;
   onClose: () => void;
-  initialUnit?: string;
-  initialFront?: string;
-  initialBack?: string;
+  onSuccess: () => void;
 }
 
-export default function CreateFlashcardForm({ 
-  onSubmit, 
+export default function CreateFlashcardForm({
+  unitId,
   onClose,
-  initialUnit = '',
-  initialFront = '',
-  initialBack = ''
+  onSuccess,
 }: CreateFlashcardFormProps) {
-  const [showMethodSelector, setShowMethodSelector] = useState(true);
-  const [creationMethod, setCreationMethod] = useState<'manual' | 'pdf' | null>(null);
-  const [unit, setUnit] = useState(initialUnit);
-  const [front, setFront] = useState(initialFront);
-  const [back, setBack] = useState(initialBack);
+  const { createFlashcard } = useFlashcardStore();
+  const [isLoading, setIsLoading] = useState(false);
+  const [front, setFront] = useState('');
+  const [back, setBack] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
-  const handleMethodSelect = (method: 'manual' | 'pdf') => {
-    setCreationMethod(method);
-    setShowMethodSelector(false);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!unit || !front || !back) {
-      alert('Por favor, completa todos los campos');
+    if (!front || !back) {
+      setError('Por favor, completa todos los campos');
       return;
     }
-    onSubmit(unit, front, back);
-  };
 
-  const handleCreateFlashcardsFromPdf = (unit: string, flashcards: Array<{ front: string; back: string }>) => {
-    // Por ahora, solo crearemos la primera flashcard
-    if (flashcards.length > 0) {
-      const firstCard = flashcards[0];
-      onSubmit(unit, firstCard.front, firstCard.back);
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await createFlashcard(unitId, front, back);
+      setFront('');
+      setBack('');
+      onSuccess();
+      onClose();
+    } catch (err) {
+      console.error('Error al crear la tarjeta:', err);
+      setError(err instanceof Error ? err.message : 'Error al crear la tarjeta');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  if (showMethodSelector) {
-    return (
-      <CreateMethodSelector
-        onSelectMethod={handleMethodSelect}
-        onClose={onClose}
-      />
-    );
-  }
-
-  if (creationMethod === 'pdf') {
-    return (
-      <PdfFlashcardGenerator
-        onSubmit={handleCreateFlashcardsFromPdf}
-        onClose={onClose}
-      />
-    );
-  }
-
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-3xl p-8 max-w-lg w-full mx-4 animate-float">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold flex items-center">
-            <span className="text-2xl mr-3">✏️</span>
-            {initialFront ? 'Editar tarjeta' : 'Crear tarjeta'}
-          </h2>
-          <button 
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl"
-          >
-            ×
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+        <h2 className="text-xl font-bold text-gray-800 mb-4">Crear nueva tarjeta</h2>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Unidad
-            </label>
-            <select
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            >
-              <option value="">Seleccionar unidad...</option>
-              <option value="ancient">🏛️ Historia Antigua</option>
-              <option value="medieval">⚔️ Edad Media</option>
-              <option value="modern">🎨 Historia Moderna</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Pregunta (frente)
+            <label htmlFor="front" className="block text-sm font-medium text-gray-700 mb-1">
+              Pregunta
             </label>
             <textarea
+              id="front"
               value={front}
               onChange={(e) => setFront(e.target.value)}
-              className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all min-h-[100px]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              rows={3}
               placeholder="Escribe la pregunta..."
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Respuesta (reverso)
+            <label htmlFor="back" className="block text-sm font-medium text-gray-700 mb-1">
+              Respuesta
             </label>
             <textarea
+              id="back"
               value={back}
               onChange={(e) => setBack(e.target.value)}
-              className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all min-h-[100px]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              rows={3}
               placeholder="Escribe la respuesta..."
             />
           </div>
 
-          <div className="flex space-x-4">
+          {error && (
+            <div className="text-red-500 text-sm">{error}</div>
+          )}
+
+          <div className="flex justify-end space-x-3 mt-6">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              disabled={isLoading}
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+              disabled={isLoading}
             >
-              {initialFront ? 'Guardar cambios' : 'Crear tarjeta'}
+              {isLoading ? 'Creando...' : 'Crear tarjeta'}
             </button>
           </div>
         </form>

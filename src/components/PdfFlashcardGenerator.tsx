@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { processPdf } from '@/services/pdf';
+import { useFlashcardStore } from '@/store/flashcards';
 
 interface PdfFlashcardGeneratorProps {
   onSubmit: (unit: string, flashcards: Array<{ front: string; back: string }>) => void;
@@ -8,42 +10,55 @@ interface PdfFlashcardGeneratorProps {
 }
 
 export default function PdfFlashcardGenerator({ onSubmit, onClose }: PdfFlashcardGeneratorProps) {
+  const { units, loadUnits } = useFlashcardStore();
   const [unit, setUnit] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadUnits();
+  }, [loadUnits]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      if (selectedFile.size > 10 * 1024 * 1024) { // 10MB
+        setError('El archivo es demasiado grande. El tamaño máximo es 10MB.');
+        return;
+      }
+      setFile(selectedFile);
+      setError(null);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file || !unit) {
-      alert('Por favor, selecciona una unidad y un archivo PDF');
+      setError('Por favor, selecciona una unidad y un archivo PDF');
       return;
     }
 
     setIsLoading(true);
     setProgress(10);
+    setError(null);
 
     try {
-      // TODO: Implementar la lógica de procesamiento del PDF y generación de flashcards con OpenAI
-      // Por ahora, solo simularemos el proceso
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      setProgress(30);
+      const flashcards = await processPdf(file);
       setProgress(100);
-
-      const mockFlashcards = [
-        { front: "Pregunta de ejemplo 1", back: "Respuesta de ejemplo 1" },
-        { front: "Pregunta de ejemplo 2", back: "Respuesta de ejemplo 2" }
-      ];
-
-      onSubmit(unit, mockFlashcards);
+      
+      if (!flashcards || flashcards.length === 0) {
+        throw new Error('No se pudieron generar flashcards del PDF proporcionado');
+      }
+      
+      console.log(`Se generaron ${flashcards.length} flashcards`);
+      onSubmit(unit, flashcards);
+      onClose(); // Cerrar el modal después de generar las flashcards
     } catch (error) {
       console.error('Error al procesar el PDF:', error);
-      alert('Hubo un error al procesar el PDF. Por favor, intenta de nuevo.');
+      setError('Hubo un error al procesar el PDF. Por favor, intenta de nuevo.');
     } finally {
       setIsLoading(false);
       setProgress(0);
@@ -76,11 +91,14 @@ export default function PdfFlashcardGenerator({ onSubmit, onClose }: PdfFlashcar
               onChange={(e) => setUnit(e.target.value)}
               className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               disabled={isLoading}
+              required
             >
               <option value="">Seleccionar unidad...</option>
-              <option value="ancient">🏛️ Historia Antigua</option>
-              <option value="medieval">⚔️ Edad Media</option>
-              <option value="modern">🎨 Historia Moderna</option>
+              {units.map((unit) => (
+                <option key={unit.id} value={unit.id}>
+                  {unit.name}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -132,12 +150,25 @@ export default function PdfFlashcardGenerator({ onSubmit, onClose }: PdfFlashcar
             )}
           </div>
 
+          {error && (
+            <div className="text-red-500 text-sm">
+              {error}
+            </div>
+          )}
+
           {isLoading && (
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div
-                className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
-                style={{ width: `${progress}%` }}
-              ></div>
+            <div className="space-y-2">
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div
+                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+              <p className="text-sm text-gray-600 text-center">
+                {progress < 30 && "Preparando archivo..."}
+                {progress >= 30 && progress < 90 && "Generando flashcards con IA..."}
+                {progress >= 90 && "¡Casi listo!"}
+              </p>
             </div>
           )}
 

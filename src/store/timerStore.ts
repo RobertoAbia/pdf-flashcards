@@ -130,9 +130,20 @@ export const useTimerStore = create<TimerStore>()(
           mode: 'pomodoro',
         },
         updateSettings: (newSettings) =>
-          set((state) => ({
-            settings: { ...state.settings, ...newSettings },
-          })),
+          set((state) => {
+            const updatedSettings = { ...state.settings, ...newSettings };
+            // Si el timer no está corriendo, actualizar el tiempo actual según el modo
+            if (!state.timer.isRunning) {
+              return {
+                settings: updatedSettings,
+                timer: {
+                  ...state.timer,
+                  timeLeft: updatedSettings[state.timer.mode] * 60
+                }
+              };
+            }
+            return { settings: updatedSettings };
+          }),
         updateStats: (type) =>
           set((state) => {
             const newStats = { ...state.stats };

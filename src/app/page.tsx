@@ -1,189 +1,147 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import PdfUploader from '../components/PdfUploader';
-import Flashcard from '../components/Flashcard';
-import CreateFlashcardForm from '../components/CreateFlashcardForm';
-import AIGenerationForm from '../components/AIGenerationForm';
-import { PlusIcon } from "@heroicons/react/24/outline";
-
-interface FlashcardType {
-  front: string;
-  back: string;
-  unit: string;
-  createdAt: Date;
-  nextReview: Date;
-  difficulty?: 'easy' | 'medium' | 'hard';
-}
+import Link from 'next/link'
+import { useEffect } from 'react'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useRouter } from 'next/navigation'
 
 export default function Home() {
-  const [flashcards, setFlashcards] = useState<FlashcardType[]>([]);
-  const [editingCard, setEditingCard] = useState<number | null>(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showAIForm, setShowAIForm] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [showCongrats, setShowCongrats] = useState(false);
+  const router = useRouter()
+  const supabase = createClientComponentClient()
 
-  const handleTextExtracted = (unit: string, text: string) => {
-    const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 0);
-    const now = new Date();
-    const newFlashcards = paragraphs.map((paragraph) => {
-      const sentences = paragraph.split(/[.!?]+/).filter(s => s.trim().length > 0);
-      return {
-        front: sentences[0].trim() + '?',
-        back: sentences.slice(1).join('. ').trim() || paragraph.trim(),
-        unit,
-        createdAt: now,
-        nextReview: now
-      };
-    });
-    setFlashcards([...flashcards, ...newFlashcards]);
-    setShowAIForm(false);
-  };
-
-  const handleCreateFlashcard = (unit: string, front: string, back: string) => {
-    const now = new Date();
-    if (editingCard !== null) {
-      const updatedFlashcards = [...flashcards];
-      updatedFlashcards[editingCard] = {
-        ...updatedFlashcards[editingCard],
-        unit,
-        front,
-        back
-      };
-      setFlashcards(updatedFlashcards);
-      setEditingCard(null);
-    } else {
-      const newFlashcard: FlashcardType = {
-        unit,
-        front,
-        back,
-        createdAt: now,
-        nextReview: now
-      };
-      setFlashcards([...flashcards, newFlashcard]);
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        console.log('No hay sesión, mostrando landing page')
+      } else {
+        console.log('Sesión detectada, redirigiendo a /dashboard')
+        await router.replace('/dashboard')
+      }
     }
-    setShowCreateForm(false);
-  };
-
-  const handleEditCard = () => {
-    setEditingCard(currentIndex);
-    setShowCreateForm(true);
-  };
-
-  const calculateNextReview = (difficulty: 'easy' | 'medium' | 'hard', currentDate: Date): Date => {
-    const nextDate = new Date(currentDate);
-    switch (difficulty) {
-      case 'easy':
-        nextDate.setDate(nextDate.getDate() + 7);
-        break;
-      case 'medium':
-        nextDate.setDate(nextDate.getDate() + 3);
-        break;
-      case 'hard':
-        nextDate.setDate(nextDate.getDate() + 1);
-        break;
-    }
-    return nextDate;
-  };
-
-  const handleDifficultyRated = (difficulty: 'easy' | 'medium' | 'hard') => {
-    const updatedFlashcards = [...flashcards];
-    updatedFlashcards[currentIndex] = {
-      ...updatedFlashcards[currentIndex],
-      difficulty,
-      nextReview: calculateNextReview(difficulty, new Date())
-    };
-    setFlashcards(updatedFlashcards);
-    
-    if (currentIndex < flashcards.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    } else {
-      setShowCongrats(true);
-    }
-  };
-
-  const today = new Date();
-  const flashcardsToReview = flashcards.filter(card => {
-    const nextReview = new Date(card.nextReview);
-    return nextReview <= today;
-  });
+    checkSession()
+  }, [router, supabase])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
-      <div className="max-w-4xl mx-auto pt-6 px-4">
-        <div className="flex justify-end mb-6">
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center space-x-3"
-          >
-            <PlusIcon className="h-5 w-5" />
-            <span>Nueva Tarjeta</span>
-          </button>
-        </div>
-
-        <section className="bg-white/80 backdrop-blur rounded-3xl shadow-lg border border-gray-200/50 hover:shadow-xl transition-all duration-300">
-          <div className="p-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-8 flex items-center">
-              <span className="text-3xl mr-3">📚</span>
-              Repaso Diario
-            </h2>
-            {flashcardsToReview.length > 0 ? (
-              <div className="mb-6">
-                <Flashcard
-                  front={flashcardsToReview[currentIndex].front}
-                  back={flashcardsToReview[currentIndex].back}
-                  onEdit={handleEditCard}
-                  onDifficultyRated={handleDifficultyRated}
-                />
-              </div>
-            ) : showCongrats ? (
-              <div className="flex flex-col items-center justify-center min-h-[400px] py-12">
-                <div className="text-7xl mb-6 animate-bounce">🎉</div>
-                <h3 className="text-2xl font-semibold mb-3">¡Felicitaciones!</h3>
-                <p className="text-gray-600 mb-6 text-lg">Has completado todas las tarjetas por hoy</p>
-                <button
-                  onClick={() => setShowCreateForm(true)}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
-                >
-                  Crear Más Tarjetas
-                </button>
-              </div>
-            ) : (
-              <div className="text-center py-16">
-                <div className="mb-8">
-                  <div className="mx-auto w-20 h-20 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center">
-                    <span className="text-4xl">🚀</span>
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="relative z-10 pb-8 bg-gray-50 sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32">
+            <main className="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
+              <div className="sm:text-center lg:text-left">
+                <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
+                  <span className="block">Aprende más rápido con</span>
+                  <span className="block text-indigo-600">PDF Flashcards</span>
+                </h1>
+                <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
+                  Convierte cualquier PDF en tarjetas de estudio inteligentes. Optimiza tu aprendizaje y mejora tu retención con nuestra tecnología de IA.
+                </p>
+                <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
+                  <div className="rounded-md shadow">
+                    <Link href="/signup" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10">
+                      Comenzar gratis
+                    </Link>
+                  </div>
+                  <div className="mt-3 sm:mt-0 sm:ml-3">
+                    <Link href="/login" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 md:py-4 md:text-lg md:px-10">
+                      Iniciar sesión
+                    </Link>
                   </div>
                 </div>
-                <h3 className="text-2xl font-semibold text-gray-800 mb-3">¡Enhorabuena!</h3>
-                <p className="text-gray-600 mb-3 text-lg">Estás al día con tus repasos</p>
-                <p className="text-gray-500">Sigue avanzando con tu temario</p>
               </div>
-            )}
+            </main>
           </div>
-        </section>
+        </div>
       </div>
 
-      {showCreateForm && (
-        <CreateFlashcardForm
-          onSubmit={handleCreateFlashcard}
-          onClose={() => {
-            setShowCreateForm(false);
-            setEditingCard(null);
-          }}
-          initialUnit={editingCard !== null ? flashcards[editingCard].unit : ''}
-          initialFront={editingCard !== null ? flashcards[editingCard].front : ''}
-          initialBack={editingCard !== null ? flashcards[editingCard].back : ''}
-        />
-      )}
-      {showAIForm && (
-        <AIGenerationForm
-          onSubmit={handleTextExtracted}
-          onClose={() => setShowAIForm(false)}
-        />
-      )}
+      {/* Feature Section */}
+      <div className="py-12 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="lg:text-center">
+            <h2 className="text-base text-indigo-600 font-semibold tracking-wide uppercase">Características</h2>
+            <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+              Una mejor manera de estudiar
+            </p>
+            <p className="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
+              Descubre por qué PDF Flashcards es la herramienta perfecta para optimizar tu aprendizaje.
+            </p>
+          </div>
+
+          <div className="mt-10">
+            <div className="space-y-10 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-10">
+              {/* Feature 1 */}
+              <div className="relative">
+                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Conversión Instantánea</p>
+                <p className="mt-2 ml-16 text-base text-gray-500">
+                  Sube tu PDF y obtén tarjetas de estudio generadas automáticamente con IA en segundos.
+                </p>
+              </div>
+
+              {/* Feature 2 */}
+              <div className="relative">
+                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
+                <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Aprendizaje Personalizado</p>
+                <p className="mt-2 ml-16 text-base text-gray-500">
+                  Sistema de repaso espaciado que se adapta a tu ritmo de aprendizaje.
+                </p>
+              </div>
+
+              {/* Feature 3 */}
+              <div className="relative">
+                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </div>
+                <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Organización Inteligente</p>
+                <p className="mt-2 ml-16 text-base text-gray-500">
+                  Organiza tus tarjetas por temas y dificultad para un estudio más eficiente.
+                </p>
+              </div>
+
+              {/* Feature 4 */}
+              <div className="relative">
+                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </div>
+                <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Sincronización Automática</p>
+                <p className="mt-2 ml-16 text-base text-gray-500">
+                  Accede a tus tarjetas desde cualquier dispositivo y continúa donde lo dejaste.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <div className="bg-indigo-50">
+        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
+          <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+            <span className="block">¿Listo para empezar?</span>
+            <span className="block text-indigo-600">Crea tu cuenta gratuita hoy.</span>
+          </h2>
+          <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
+            <div className="inline-flex rounded-md shadow">
+              <Link href="/signup" className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                Comenzar ahora
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  );
+  )
 }

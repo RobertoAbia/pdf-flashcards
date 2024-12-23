@@ -4,7 +4,7 @@ import { PlayIcon, PauseIcon, ArrowPathIcon, Cog6ToothIcon } from '@heroicons/re
 import { useRouter } from 'next/navigation';
 import { useTimerStore } from '@/store/timerStore';
 
-export const MiniTimer = () => {
+export default function MiniTimer() {
   const router = useRouter();
   const { 
     timer: { timeLeft, isRunning, mode },
@@ -16,8 +16,8 @@ export const MiniTimer = () => {
   const seconds = timeLeft % 60;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm flex items-center space-x-4">
-      <div className="text-xl font-bold text-blue-600">
+    <div className="bg-white rounded-2xl shadow-lg flex items-center space-x-4 p-2 border border-gray-100">
+      <div className="text-xl font-bold text-blue-600 px-2">
         {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
       </div>
       <div className="flex items-center space-x-2">
@@ -46,4 +46,4 @@ export const MiniTimer = () => {
       </div>
     </div>
   );
-};
+}
