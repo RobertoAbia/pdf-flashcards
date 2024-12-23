@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useFlashcardStore } from '../store/flashcardStore'; // Importar el store de flashcards
+import { useFlashcardStore } from '../store/flashcards'; // Corregir la ruta de importación
 
 interface FlashcardProps {
   id: string; // Cambiar de number a string ya que los IDs de Supabase son UUIDs
