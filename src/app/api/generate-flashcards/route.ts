@@ -137,7 +137,11 @@ export async function POST(request: Request) {
 
       try {
         // Asegurarnos de que la respuesta es un JSON válido
-        const responseText = response.choices[0].message.content.trim();
+        const responseText = response.choices[0]?.message?.content?.trim() ?? '';
+        if (!responseText) {
+          throw new Error('No se recibió una respuesta válida de OpenAI');
+        }
+        
         const result = JSON.parse(responseText);
         
         if (result && result.flashcards && Array.isArray(result.flashcards)) {
@@ -149,7 +153,7 @@ export async function POST(request: Request) {
         }
       } catch (error) {
         console.error('Error al procesar la respuesta de OpenAI:', error);
-        console.error('Respuesta recibida:', response.choices[0].message.content);
+        console.error('Respuesta recibida:', response.choices[0]?.message?.content);
         throw error;
       }
 
