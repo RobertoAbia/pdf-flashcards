@@ -22,7 +22,7 @@ export default function Dashboard() {
     // Aquí implementaremos la lógica para seleccionar las tarjetas del día
     // Por ahora, mostraremos todas las tarjetas como ejemplo
     const allCards = flashcards.map(card => {
-      const unit = units.find(u => u.id === card.unitId);
+      const unit = units.find(u => u.id === card.unit_id);
       return {
         ...card,
         unitName: unit?.name || 'Unidad sin nombre'
