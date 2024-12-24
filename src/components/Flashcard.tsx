@@ -27,7 +27,7 @@ export const Flashcard = ({ id, front, back, onEdit, onDifficultyRated }: Flashc
 
       // Calcular la próxima fecha de revisión basada en la dificultad
       const today = new Date();
-      let nextReviewDate = new Date(today);
+      const nextReviewDate = new Date(today);
       
       switch(difficulty) {
         case 'easy':
