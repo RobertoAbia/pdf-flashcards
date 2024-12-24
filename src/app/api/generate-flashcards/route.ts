@@ -137,7 +137,7 @@ export async function POST(request: Request) {
 
       try {
         // Asegurarnos de que la respuesta es un JSON válido
-        const responseText = response.choices[0]?.message?.content?.trim() ?? '';
+        const responseText = response?.choices?.[0]?.message?.content?.trim() ?? '';
         if (!responseText) {
           throw new Error('No se recibió una respuesta válida de OpenAI');
         }
