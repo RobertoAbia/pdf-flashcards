@@ -173,7 +173,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error detallado al generar flashcards:', error);
     return NextResponse.json(
-      { error: 'Error al procesar el PDF y generar flashcards', details: error.message },
+      { error: 'Error al procesar el PDF y generar flashcards', details: error instanceof Error ? error.message : 'Error desconocido' },
       { status: 500 }
     );
   }
