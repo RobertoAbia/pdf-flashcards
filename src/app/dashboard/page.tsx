@@ -16,18 +16,15 @@ const MiniTimer = dynamic(() => import('@/components/MiniTimer'), {
 export default function Dashboard() {
   const { flashcards, units } = useFlashcardStore();
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [todaysCards, setTodaysCards] = useState([]);
+  const [todaysCards, setTodaysCards] = useState<Array<Flashcard & { unitName: string }>>([]);
 
   useEffect(() => {
     // Aquí implementaremos la lógica para seleccionar las tarjetas del día
     // Por ahora, mostraremos todas las tarjetas como ejemplo
-    const allCards = flashcards.map(card => {
-      const unit = units.find(u => u.id === card.unit_id);
-      return {
-        ...card,
-        unitName: unit?.name || 'Unidad sin nombre'
-      };
-    });
+    const allCards = flashcards.map(card => ({
+      ...card,
+      unitName: units.find(u => u.id === card.unit_id)?.name || 'Unidad sin nombre'
+    }));
     setTodaysCards(allCards);
   }, [flashcards, units]);
 
