@@ -234,8 +234,8 @@ export default function UnitPage({ params }: UnitPageProps) {
 
       {(showCreateForm || editingCard) && (
         <CreateFlashcardForm
-          onSubmit={editingCard ? handleEditFlashcard : handleCreateFlashcard}
-          onClose={handleCloseModal}
+          handleSubmit={editingCard ? handleEditFlashcard : handleCreateFlashcard}
+          handleClose={handleCloseModal}
           initialUnit={unitId}
           initialFront={editingCard?.front}
           initialBack={editingCard?.back}
