@@ -81,7 +81,7 @@ export default function Dashboard() {
             <Flashcard
               front={todaysCards[currentCardIndex]?.front || ''}
               back={todaysCards[currentCardIndex]?.back || ''}
-              onDifficultyRated={(difficulty) => {
+              onDifficultyRated={async (difficulty) => {
                 // Aquí implementaremos la lógica para el SRS
                 handleNextCard();
               }}
