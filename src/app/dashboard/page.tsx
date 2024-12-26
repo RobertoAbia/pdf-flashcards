@@ -79,6 +79,7 @@ export default function Dashboard() {
             </div>
             
             <Flashcard
+              id={todaysCards[currentCardIndex]?.id || ''}
               front={todaysCards[currentCardIndex]?.front || ''}
               back={todaysCards[currentCardIndex]?.back || ''}
               onDifficultyRated={async (difficulty) => {
