@@ -170,10 +170,11 @@ export async function POST(request: Request) {
     console.log(`Promedio de flashcards por chunk: ${(allFlashcards.length / chunks.length).toFixed(2)}`);
     return NextResponse.json({ flashcards: allFlashcards });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error detallado al generar flashcards:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
     return NextResponse.json(
-      { error: 'Error al procesar el PDF y generar flashcards', details: error instanceof Error ? error.message : 'Error desconocido' },
+      { error: 'Error al procesar el PDF y generar flashcards', details: errorMessage },
       { status: 500 }
     );
   }
