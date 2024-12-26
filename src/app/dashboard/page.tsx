@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useFlashcardStore } from '@/store/flashcards';
-import type { Flashcard } from '@/types/flashcard';
+import type { Flashcard as FlashcardType } from '@/types/flashcard';
 import dynamic from 'next/dynamic';
 import StudyTracker from '@/components/StudyTracker';
 import FlashcardStats from '@/components/FlashcardStats';
+import { Flashcard } from '@/components/Flashcard';
 import Link from 'next/link';
 
 // Importar MiniTimer de forma dinámica para evitar errores de hidratación
@@ -16,7 +17,7 @@ const MiniTimer = dynamic(() => import('@/components/MiniTimer'), {
 export default function Dashboard() {
   const { flashcards, units } = useFlashcardStore();
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [todaysCards, setTodaysCards] = useState<Array<Flashcard & { unitName: string }>>([]);
+  const [todaysCards, setTodaysCards] = useState<Array<FlashcardType & { unitName: string }>>([]);
 
   useEffect(() => {
     // Aquí implementaremos la lógica para seleccionar las tarjetas del día
