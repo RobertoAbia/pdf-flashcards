@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ArrowLeftIcon, PlusIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useFlashcardStore } from '@/store/flashcards';
 import { useRouter } from 'next/navigation';
@@ -16,7 +16,7 @@ interface UnitPageProps {
 
 export default function UnitPage({ params }: UnitPageProps) {
   const router = useRouter();
-  const resolvedParams = use(params);
+  const { unitId } = params;
   const { loadUnits, loadFlashcards } = useFlashcardStore();
   const [unit, setUnit] = useState<Unit | null>(null);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
@@ -37,7 +37,7 @@ export default function UnitPage({ params }: UnitPageProps) {
       await createFlashcard(unit, front, back);
       
       const { getFlashcardsByUnit } = useFlashcardStore.getState();
-      const updatedFlashcards = getFlashcardsByUnit(resolvedParams.unitId);
+      const updatedFlashcards = getFlashcardsByUnit(unitId);
       setFlashcards(updatedFlashcards);
       
       handleCloseModal();
@@ -58,14 +58,14 @@ export default function UnitPage({ params }: UnitPageProps) {
       });
       
       // Si la unidad cambió, eliminamos la tarjeta de la vista actual
-      if (unit !== resolvedParams.unitId) {
+      if (unit !== unitId) {
         setFlashcards(currentFlashcards => 
           currentFlashcards.filter(f => f.id !== editingCard.id)
         );
       } else {
         // Si la unidad es la misma, actualizamos la tarjeta en la vista actual
         const { getFlashcardsByUnit } = useFlashcardStore.getState();
-        const updatedFlashcards = getFlashcardsByUnit(resolvedParams.unitId);
+        const updatedFlashcards = getFlashcardsByUnit(unitId);
         setFlashcards(updatedFlashcards);
       }
       
@@ -103,11 +103,11 @@ export default function UnitPage({ params }: UnitPageProps) {
       try {
         setIsLoading(true);
         await loadUnits();
-        await loadFlashcards(resolvedParams.unitId);
+        await loadFlashcards(unitId);
         
         const { getUnit, getFlashcardsByUnit } = useFlashcardStore.getState();
-        const unitData = getUnit(resolvedParams.unitId);
-        const flashcardsData = getFlashcardsByUnit(resolvedParams.unitId);
+        const unitData = getUnit(unitId);
+        const flashcardsData = getFlashcardsByUnit(unitId);
         
         setUnit(unitData || null);
         setFlashcards(flashcardsData);
@@ -124,7 +124,7 @@ export default function UnitPage({ params }: UnitPageProps) {
     };
 
     loadData();
-  }, [resolvedParams.unitId, loadUnits, loadFlashcards, router]);
+  }, [unitId, loadUnits, loadFlashcards, router]);
 
   if (isLoading) {
     return (
@@ -236,7 +236,7 @@ export default function UnitPage({ params }: UnitPageProps) {
         <CreateFlashcardForm
           onSubmit={editingCard ? handleEditFlashcard : handleCreateFlashcard}
           onClose={handleCloseModal}
-          initialUnit={resolvedParams.unitId}
+          initialUnit={unitId}
           initialFront={editingCard?.front}
           initialBack={editingCard?.back}
         />
