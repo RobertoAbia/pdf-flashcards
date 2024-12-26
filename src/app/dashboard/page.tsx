@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useFlashcardStore } from '@/store/flashcards';
+import type { Flashcard } from '@/types/flashcard';
 import dynamic from 'next/dynamic';
 import StudyTracker from '@/components/StudyTracker';
 import FlashcardStats from '@/components/FlashcardStats';
 import Link from 'next/link';
-import { Flashcard } from '@/components/Flashcard';
 
 // Importar MiniTimer de forma dinámica para evitar errores de hidratación
 const MiniTimer = dynamic(() => import('@/components/MiniTimer'), {
