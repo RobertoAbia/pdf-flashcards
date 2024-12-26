@@ -4,23 +4,26 @@ import { useState } from 'react';
 import { useFlashcardStore } from '@/store/flashcards';
 
 interface CreateFlashcardFormProps {
-  unitId: string;
-  onClose: () => void;
-  onSuccess: () => void;
+  handleSubmit: (unit: string, front: string, back: string) => Promise<void>;
+  handleClose: () => void;
+  initialUnit: string;
+  initialFront?: string;
+  initialBack?: string;
 }
 
 export default function CreateFlashcardForm({
-  unitId,
-  onClose,
-  onSuccess,
+  handleSubmit,
+  handleClose,
+  initialUnit,
+  initialFront = '',
+  initialBack = '',
 }: CreateFlashcardFormProps) {
-  const { createFlashcard } = useFlashcardStore();
   const [isLoading, setIsLoading] = useState(false);
-  const [front, setFront] = useState('');
-  const [back, setBack] = useState('');
+  const [front, setFront] = useState(initialFront);
+  const [back, setBack] = useState(initialBack);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!front || !back) {
       setError('Por favor, completa todos los campos');
@@ -31,11 +34,10 @@ export default function CreateFlashcardForm({
     setError(null);
 
     try {
-      await createFlashcard(unitId, front, back);
+      await handleSubmit(initialUnit, front, back);
       setFront('');
       setBack('');
-      onSuccess();
-      onClose();
+      handleClose();
     } catch (err) {
       console.error('Error al crear la tarjeta:', err);
       setError(err instanceof Error ? err.message : 'Error al crear la tarjeta');
@@ -47,9 +49,11 @@ export default function CreateFlashcardForm({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Crear nueva tarjeta</h2>
+        <h2 className="text-xl font-bold text-gray-800 mb-4">
+          {initialFront ? 'Editar tarjeta' : 'Crear nueva tarjeta'}
+        </h2>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <label htmlFor="front" className="block text-sm font-medium text-gray-700 mb-1">
               Pregunta
@@ -85,7 +89,7 @@ export default function CreateFlashcardForm({
           <div className="flex justify-end space-x-3 mt-6">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
               disabled={isLoading}
             >
@@ -96,7 +100,7 @@ export default function CreateFlashcardForm({
               className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
               disabled={isLoading}
             >
-              {isLoading ? 'Creando...' : 'Crear tarjeta'}
+              {isLoading ? (initialFront ? 'Guardando...' : 'Creando...') : (initialFront ? 'Guardar cambios' : 'Crear tarjeta')}
             </button>
           </div>
         </form>
