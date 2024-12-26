@@ -12,7 +12,7 @@ import Link from 'next/link';
 
 export default function UnitPage() {
   const { unitId } = useParams();
-  const { loadFlashcards, getUnit, flashcards } = useFlashcardStore();
+  const { loadFlashcards, getUnit, flashcards, createFlashcard } = useFlashcardStore();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingFlashcard, setEditingFlashcard] = useState<any | null>(null);
   const [deletingFlashcard, setDeletingFlashcard] = useState<any | null>(null);
@@ -52,9 +52,12 @@ export default function UnitPage() {
 
         {showCreateForm && (
           <CreateFlashcardForm
-            unitId={unitId as string}
-            onClose={() => setShowCreateForm(false)}
-            onSuccess={() => setShowCreateForm(false)}
+            handleSubmit={async (unit, front, back) => {
+              await createFlashcard(unit, front, back);
+              setShowCreateForm(false);
+            }}
+            handleClose={() => setShowCreateForm(false)}
+            initialUnit={unitId as string}
           />
         )}
 
