@@ -59,10 +59,9 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   }, [router, pathname])
 
   useEffect(() => {
-    const auth = supabase.auth;
     const {
       data: { subscription },
-    } = auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         router.refresh();
       }
@@ -71,7 +70,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [router, supabase]);
+  }, [supabase.auth, router]);
 
   return (
     <SupabaseContext.Provider value={{ user, loading }}>

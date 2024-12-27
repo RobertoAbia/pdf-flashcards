@@ -591,9 +591,9 @@ export const useFlashcardStore = create<FlashcardStore>()((set, get) => ({
 
       if (flashcardsError) throw flashcardsError;
 
-      let totalCards = flashcardsData.length;
-      let easyCards = flashcardsData.filter(f => f.difficulty === 'easy').length;
-      let mediumCards = flashcardsData.filter(f => f.difficulty === 'medium').length;
+      const totalCards = flashcardsData.length;
+      const easyCards = flashcardsData.filter(f => f.difficulty === 'easy').length;
+      const mediumCards = flashcardsData.filter(f => f.difficulty === 'medium').length;
       
       // Calcular el mastery_score: (easy * 1 + medium * 0.5) / total * 100
       const masteryScore = Math.round(((easyCards * 1 + mediumCards * 0.5) / totalCards) * 100);
