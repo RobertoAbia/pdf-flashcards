@@ -15,12 +15,14 @@ const SupabaseContext = createContext<SupabaseContextType>({
   loading: true,
 })
 
+// Crear una única instancia del cliente Supabase
+const supabase = createClientComponentClient()
+
 export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const pathname = usePathname()
-  const supabase = createClientComponentClient()
 
   useEffect(() => {
     // Verificar el usuario actual
@@ -59,18 +61,16 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   }, [router, pathname])
 
   useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
-        router.refresh();
+        router.refresh()
       }
-    });
+    })
 
     return () => {
-      subscription.unsubscribe();
-    };
-  }, [supabase.auth, router]);
+      subscription.unsubscribe()
+    }
+  }, [router])
 
   return (
     <SupabaseContext.Provider value={{ user, loading }}>

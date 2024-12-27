@@ -112,7 +112,10 @@ export default function FlashcardsPage() {
         console.log('Todas las tarjetas completadas, actualizando racha...');
         try {
           // Marcar como revisada y actualizar la racha
-          await markFlashcardReviewed(currentCard.id, new Date(updatedCard.next_review));
+          await markFlashcardReviewed(
+            currentCard.id, 
+            updatedCard.next_review ? new Date(updatedCard.next_review) : new Date()
+          );
           
           // Recargar las estadísticas para mostrar la nueva racha
           if (statsRef.current) {
@@ -524,7 +527,7 @@ export default function FlashcardsPage() {
             try {
               await deleteFlashcard(deletingFlashcard.id);
               await loadAllFlashcards();
-              const { flashcards, units } = useFlashcardStore.getState();
+              const { flashcards } = useFlashcardStore.getState();
               
               const now = new Date();
               now.setHours(0, 0, 0, 0);
@@ -537,15 +540,6 @@ export default function FlashcardsPage() {
                   nextReview.setHours(0, 0, 0, 0);
                   const diffDays = Math.floor((nextReview.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
                   return diffDays <= 0;
-                })
-                .map(card => ({
-                  ...card,
-                  unitName: units.find(u => u.id === card.unit_id)?.name || 'Unidad desconocida'
-                }))
-                .sort((a, b) => {
-                  if (!a.next_review) return -1;
-                  if (!b.next_review) return 1;
-                  return new Date(a.next_review).getTime() - new Date(b.next_review).getTime();
                 });
 
               setDueFlashcards(dueCards);
