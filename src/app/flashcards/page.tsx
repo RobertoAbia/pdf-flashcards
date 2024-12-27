@@ -25,6 +25,7 @@ export default function FlashcardsPage() {
   const [isCreating, setIsCreating] = useState(false);
   const { units } = useFlashcardStore();
   const statsRef = useRef<{ reloadStats: () => Promise<void> }>();
+  const [completedCards, setCompletedCards] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const loadData = async () => {
@@ -96,21 +97,67 @@ export default function FlashcardsPage() {
       const updatedCard = await updateFlashcardDifficulty(currentCard.id, difficulty);
       console.log('Tarjeta actualizada:', updatedCard);
 
-      // Si es la última tarjeta, recargar las estadísticas
-      if (currentIndex === dueFlashcards.length - 1) {
-        await statsRef.current?.reloadStats();
-      }
-
-      setShowAnswer(false);
+      // Marcar la tarjeta como completada
+      const newCompletedCards = new Set([...completedCards, currentCard.id]);
+      setCompletedCards(newCompletedCards);
       
-      // Actualizar la lista de tarjetas pendientes
-      setDueFlashcards(current => 
-        current.filter((_, index) => index !== currentIndex)
-      );
+      console.log('Estado de tarjetas completadas:', {
+        completadas: newCompletedCards.size,
+        total: dueFlashcards.length,
+        esUltima: newCompletedCards.size === dueFlashcards.length
+      });
 
-      // Si no quedan más tarjetas, volver al índice 0
-      if (currentIndex >= dueFlashcards.length - 1) {
-        setCurrentIndex(0);
+      // Si todas las tarjetas están completadas
+      if (newCompletedCards.size === dueFlashcards.length) {
+        console.log('Todas las tarjetas completadas, actualizando racha...');
+        try {
+          // Marcar como revisada y actualizar la racha
+          await markFlashcardReviewed(currentCard.id, new Date(updatedCard.next_review));
+          
+          // Recargar las estadísticas para mostrar la nueva racha
+          if (statsRef.current) {
+            await statsRef.current.reloadStats();
+          }
+          
+          // Esperar un momento antes de limpiar las tarjetas
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Recargar las tarjetas pendientes
+          await loadAllFlashcards();
+          const { flashcards } = useFlashcardStore.getState();
+          
+          // Filtrar las tarjetas que toca repasar hoy o antes
+          const now = new Date();
+          now.setHours(0, 0, 0, 0);
+          
+          const dueCards = flashcards
+            .filter(card => {
+              if (currentUnitId && card.unit_id !== currentUnitId) return false;
+              if (!card.next_review) return true;
+              const nextReview = new Date(card.next_review);
+              nextReview.setHours(0, 0, 0, 0);
+              const diffDays = Math.floor((nextReview.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+              return diffDays <= 0;
+            });
+
+          // Si no quedan tarjetas pendientes, mostrar mensaje de felicitación
+          if (dueCards.length === 0) {
+            setDueFlashcards([]);
+          } else {
+            // Si quedan tarjetas pendientes, actualizar la lista
+            setDueFlashcards(dueCards);
+            setCurrentIndex(0);
+            setCompletedCards(new Set());
+          }
+        } catch (error) {
+          console.error('Error al actualizar la racha:', error);
+        }
+      } else {
+        setShowAnswer(false);
+        // Avanzar a la siguiente tarjeta si hay más
+        if (currentIndex < dueFlashcards.length - 1) {
+          setCurrentIndex(currentIndex + 1);
+        }
       }
     } catch (error) {
       console.error('Error detallado al actualizar la tarjeta:', error);
@@ -332,7 +379,7 @@ export default function FlashcardsPage() {
             </div>
             <div className="flex justify-between items-center mb-8">
               <div className="text-sm font-medium text-gray-500">
-                Tarjeta {currentIndex + 1} de {dueFlashcards.length}
+                {completedCards.size} de {dueFlashcards.length} tarjetas completadas
               </div>
             </div>
 
@@ -341,7 +388,7 @@ export default function FlashcardsPage() {
               <div className="absolute top-0 left-0 right-0 h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-blue-500 transition-all duration-300"
-                  style={{ width: `${((currentIndex + 1) / dueFlashcards.length) * 100}%` }}
+                  style={{ width: `${(completedCards.size / dueFlashcards.length) * 100}%` }}
                 />
               </div>
 
@@ -484,9 +531,7 @@ export default function FlashcardsPage() {
               
               const dueCards = flashcards
                 .filter(card => {
-                  // Si hay un unitId en la URL, solo mostrar tarjetas de esa unidad
                   if (currentUnitId && card.unit_id !== currentUnitId) return false;
-                  
                   if (!card.next_review) return true;
                   const nextReview = new Date(card.next_review);
                   nextReview.setHours(0, 0, 0, 0);
@@ -506,7 +551,7 @@ export default function FlashcardsPage() {
               setDueFlashcards(dueCards);
               setDeletingFlashcard(null);
               
-              // Si no quedan tarjetas, volver a la página anterior
+              // Si no quedan tarjetas, volver al índice 0
               if (dueCards.length === 0) {
                 router.back();
               } else if (currentIndex >= dueCards.length) {

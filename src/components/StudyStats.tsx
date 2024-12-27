@@ -55,8 +55,7 @@ const StudyStats = forwardRef((props, ref) => {
           <span className="text-sm font-medium text-yellow-700">Maestría</span>
         </div>
         <div className="flex items-baseline">
-          <span className="text-3xl font-bold text-yellow-900">{masteryScore.toFixed(2)}</span>
-          <span className="text-sm text-yellow-600 ml-1.5">pts</span>
+          <span className="text-3xl font-bold text-yellow-900">{Math.round(masteryScore)}%</span>
         </div>
       </div>
     </div>

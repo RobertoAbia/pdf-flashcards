@@ -568,40 +568,51 @@ export const useFlashcardStore = create<FlashcardStore>()((set, get) => ({
       // Convertir la fecha a formato YYYY-MM-DD
       const formattedDate = nextReviewDate.toISOString().split('T')[0];
 
-      const params = {
-        p_flashcard_id: flashcardId,
-        p_user_id: user.id,
-        p_next_review_date: formattedDate
-      };
+      console.log('Fecha formateada:', formattedDate);
 
-      console.log('Llamando a mark_flashcard_reviewed con parámetros:', params);
+      // Actualizar la tarjeta
+      const { data, error } = await supabase
+        .from('flashcards')
+        .update({
+          next_review: formattedDate,
+          last_reviewed: new Date().toISOString()
+        })
+        .eq('id', flashcardId)
+        .select()
+        .single();
 
-      const { data, error, status, statusText } = await supabase
-        .rpc('mark_flashcard_reviewed', params);
+      if (error) throw error;
 
-      // Log detallado del resultado
-      console.log('Respuesta completa de mark_flashcard_reviewed:', {
-        data,
-        error,
-        status,
-        statusText,
-        params
-      });
+      // Calcular el mastery_score
+      const { data: flashcardsData, error: flashcardsError } = await supabase
+        .from('flashcards')
+        .select('difficulty')
+        .eq('unit_id', data.unit_id);
 
-      if (error) {
-        console.error('Error detallado en mark_flashcard_reviewed:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-        throw error;
-      }
+      if (flashcardsError) throw flashcardsError;
 
-      if (!data) {
-        console.error('No se recibió respuesta de mark_flashcard_reviewed');
-        throw new Error('No se recibió respuesta del servidor');
-      }
+      let totalCards = flashcardsData.length;
+      let easyCards = flashcardsData.filter(f => f.difficulty === 'easy').length;
+      let mediumCards = flashcardsData.filter(f => f.difficulty === 'medium').length;
+      
+      // Calcular el mastery_score: (easy * 1 + medium * 0.5) / total * 100
+      const masteryScore = Math.round(((easyCards * 1 + mediumCards * 0.5) / totalCards) * 100);
+      console.log('Nuevo mastery score calculado:', masteryScore);
+
+      // Actualizar el perfil con la nueva fecha de estudio y el mastery score
+      const { data: streakData, error: streakError } = await supabase
+        .from('profiles')
+        .update({
+          last_study_date: new Date().toISOString().split('T')[0],
+          mastery_score: masteryScore
+        })
+        .eq('id', user.id)
+        .select('study_streak, last_study_date, mastery_score')
+        .single();
+
+      if (streakError) throw streakError;
+
+      console.log('Perfil actualizado:', streakData);
 
       // Actualizar el estado local
       set((state) => ({

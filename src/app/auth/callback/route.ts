@@ -12,6 +12,6 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  // URL to redirect to after sign in process completes
+  // Redirigir a la página principal después de confirmar el email
   return NextResponse.redirect(new URL('/flashcards', requestUrl.origin))
 }

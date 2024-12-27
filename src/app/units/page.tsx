@@ -6,27 +6,33 @@ import Link from 'next/link';
 import { PlusIcon, PencilIcon, TrashIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import CreateUnitModal from '@/components/CreateUnitModal';
 import EditUnitModal from '@/components/EditUnitModal';
+import DeleteUnitModal from '@/components/DeleteUnitModal';
 import Header from '@/components/Header';
+import { Unit } from '@/types/supabase';
 
 export default function UnitsPage() {
   const { units, loadUnits, getFlashcardCountsByDifficulty } = useFlashcardStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingUnit, setEditingUnit] = useState<any | null>(null);
+  const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
+  const [deletingUnit, setDeletingUnit] = useState<Unit | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     loadUnits();
   }, [loadUnits]);
 
-  const handleDeleteUnit = async (id: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta unidad? Se eliminarán también todas las tarjetas asociadas.')) {
-      return;
-    }
+  const handleDeleteUnit = async (unit: Unit) => {
+    setDeletingUnit(unit);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingUnit) return;
 
     try {
-      setIsDeleting(id);
+      setIsDeleting(deletingUnit.id);
       const { deleteUnit } = useFlashcardStore.getState();
-      await deleteUnit(id);
+      await deleteUnit(deletingUnit.id);
+      setDeletingUnit(null);
     } catch (error) {
       console.error('Error deleting unit:', error);
     } finally {
@@ -60,6 +66,15 @@ export default function UnitsPage() {
           <EditUnitModal
             unit={editingUnit}
             onClose={() => setEditingUnit(null)}
+          />
+        )}
+
+        {/* Modal de eliminación */}
+        {deletingUnit && (
+          <DeleteUnitModal
+            unit={deletingUnit}
+            onClose={() => setDeletingUnit(null)}
+            onConfirm={handleConfirmDelete}
           />
         )}
 
@@ -102,25 +117,26 @@ export default function UnitsPage() {
                       </div>
                     </div>
                   </div>
+                  <ChevronRightIcon className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
                 </Link>
-
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-2 ml-4">
                   <button
                     onClick={() => setEditingUnit(unit)}
-                    className="text-gray-500 hover:text-blue-500 transition-colors"
+                    className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
+                    title="Editar unidad"
                   >
                     <PencilIcon className="h-5 w-5" />
                   </button>
                   <button
-                    onClick={() => handleDeleteUnit(unit.id)}
-                    className="text-gray-500 hover:text-red-500 transition-colors"
+                    onClick={() => handleDeleteUnit(unit)}
+                    className={`p-2 text-gray-400 hover:text-red-500 transition-colors ${
+                      isDeleting === unit.id ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                     disabled={isDeleting === unit.id}
+                    title="Eliminar unidad"
                   >
                     <TrashIcon className="h-5 w-5" />
                   </button>
-                  <Link href={`/units/${unit.id}`} className="text-gray-400 hover:text-blue-500 transition-colors">
-                    <ChevronRightIcon className="h-5 w-5" />
-                  </Link>
                 </div>
               </div>
             </div>
