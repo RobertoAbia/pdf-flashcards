@@ -104,10 +104,13 @@ export const useTimerStore = create<TimerStore>()(
         gainNode.connect(audioContext.destination);
         
         oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.01);
+        gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5);
         
         oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.1);
+        oscillator.stop(audioContext.currentTime + 0.5);
       };
 
       return {
@@ -207,6 +210,11 @@ export const useTimerStore = create<TimerStore>()(
             state.pauseTimer();
           }
           state.resetTimer(mode);
+          if (state.settings.autoStartBreaks) {
+            setTimeout(() => {
+              state.startTimer();
+            }, 100);
+          }
         },
       };
     },

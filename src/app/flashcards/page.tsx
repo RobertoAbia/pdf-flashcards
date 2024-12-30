@@ -2,15 +2,22 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useFlashcardStore } from '@/store/flashcards';
-import { ChevronRightIcon, ChevronLeftIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { ChevronRightIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import EditFlashcardModal from '@/components/EditFlashcardModal';
 import DeleteFlashcardModal from '@/components/DeleteFlashcardModal';
 import StudyStats from '@/components/StudyStats';
 import { useRouter } from 'next/navigation';
+import { updateStudyStreak, resetDailyStreak } from '@/lib/user';
 
 export default function FlashcardsPage() {
-  const { loadUnits, loadAllFlashcards, updateFlashcardDifficulty, markFlashcardReviewed, deleteFlashcard, createFlashcard } = useFlashcardStore();
+  const { 
+    loadUnits, 
+    loadAllFlashcards, 
+    updateFlashcardDifficulty, 
+    markFlashcardReviewed, 
+    deleteFlashcard
+  } = useFlashcardStore();
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -18,19 +25,19 @@ export default function FlashcardsPage() {
   const [dueFlashcards, setDueFlashcards] = useState<any[]>([]);
   const [editingFlashcard, setEditingFlashcard] = useState<any | null>(null);
   const [deletingFlashcard, setDeletingFlashcard] = useState<any | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [currentUnitId, setCurrentUnitId] = useState<string | null>(null);
-  const [newFront, setNewFront] = useState('');
-  const [newBack, setNewBack] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
   const { units } = useFlashcardStore();
   const statsRef = useRef<{ reloadStats: () => Promise<void> }>();
   const [completedCards, setCompletedCards] = useState<Set<string>>(new Set());
+  const [showCongratulations, setShowCongratulations] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
       try {
+        setError(null);
         setIsLoading(true);
+        await resetDailyStreak(); // Reiniciar el flag al cargar
         await loadUnits();
         await loadAllFlashcards();
         
@@ -70,20 +77,31 @@ export default function FlashcardsPage() {
         setDueFlashcards(dueCards);
       } catch (error) {
         console.error('Error loading flashcards:', error);
+        setError('Error al cargar las tarjetas. Por favor, intenta recargar la página.');
+        // Asegurarnos de que dueFlashcards esté vacío en caso de error
+        setDueFlashcards([]);
       } finally {
+        // Asegurarnos de que isLoading se ponga a false incluso si hay error
         setIsLoading(false);
       }
     };
 
     loadData();
-  }, [loadUnits, loadAllFlashcards]);
+  }, []);
+
+  useEffect(() => {
+    // Reiniciar el estado de felicitación cuando se cargan nuevas tarjetas
+    setShowCongratulations(false);
+  }, [dueFlashcards.length]);
 
   const handleNext = () => {
+    if (dueFlashcards.length === 0) return;
     setShowAnswer(false);
     setCurrentIndex(prev => (prev + 1) % dueFlashcards.length);
   };
 
   const handlePrevious = () => {
+    if (dueFlashcards.length === 0) return;
     setShowAnswer(false);
     setCurrentIndex(prev => (prev - 1 + dueFlashcards.length) % dueFlashcards.length);
   };
@@ -93,80 +111,31 @@ export default function FlashcardsPage() {
     if (!currentCard) return;
 
     try {
-      console.log('Evaluando tarjeta:', currentCard.id, 'con dificultad:', difficulty);
+      // 1. Actualizar la tarjeta
       const updatedCard = await updateFlashcardDifficulty(currentCard.id, difficulty);
-      console.log('Tarjeta actualizada:', updatedCard);
+      await markFlashcardReviewed(
+        currentCard.id, 
+        updatedCard.next_review ? new Date(updatedCard.next_review) : new Date()
+      );
 
-      // Marcar la tarjeta como completada
+      // 2. Marcar como completada
       const newCompletedCards = new Set([...completedCards, currentCard.id]);
       setCompletedCards(newCompletedCards);
+
+      // 3. Actualizar fecha de estudio y posiblemente la racha
+      const isLastCard = newCompletedCards.size === dueFlashcards.length;
+      await updateStudyStreak(isLastCard);
       
-      console.log('Estado de tarjetas completadas:', {
-        completadas: newCompletedCards.size,
-        total: dueFlashcards.length,
-        esUltima: newCompletedCards.size === dueFlashcards.length
-      });
-
-      // Si todas las tarjetas están completadas
-      if (newCompletedCards.size === dueFlashcards.length) {
-        console.log('Todas las tarjetas completadas, actualizando racha...');
-        try {
-          // Marcar como revisada y actualizar la racha
-          await markFlashcardReviewed(
-            currentCard.id, 
-            updatedCard.next_review ? new Date(updatedCard.next_review) : new Date()
-          );
-          
-          // Recargar las estadísticas para mostrar la nueva racha
-          if (statsRef.current) {
-            await statsRef.current.reloadStats();
-          }
-          
-          // Esperar un momento antes de limpiar las tarjetas
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // Recargar las tarjetas pendientes
-          await loadAllFlashcards();
-          const { flashcards } = useFlashcardStore.getState();
-          
-          // Filtrar las tarjetas que toca repasar hoy o antes
-          const now = new Date();
-          now.setHours(0, 0, 0, 0);
-          
-          const dueCards = flashcards
-            .filter(card => {
-              if (currentUnitId && card.unit_id !== currentUnitId) return false;
-              if (!card.next_review) return true;
-              const nextReview = new Date(card.next_review);
-              nextReview.setHours(0, 0, 0, 0);
-              const diffDays = Math.floor((nextReview.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-              return diffDays <= 0;
-            });
-
-          // Si no quedan tarjetas pendientes, mostrar mensaje de felicitación
-          if (dueCards.length === 0) {
-            setDueFlashcards([]);
-          } else {
-            // Si quedan tarjetas pendientes, actualizar la lista
-            setDueFlashcards(dueCards);
-            setCurrentIndex(0);
-            setCompletedCards(new Set());
-          }
-        } catch (error) {
-          console.error('Error al actualizar la racha:', error);
-        }
+      if (isLastCard) {
+        await statsRef.current?.reloadStats();
+        setShowCongratulations(true);
+        setDueFlashcards([]);
       } else {
         setShowAnswer(false);
-        // Avanzar a la siguiente tarjeta si hay más
-        if (currentIndex < dueFlashcards.length - 1) {
-          setCurrentIndex(currentIndex + 1);
-        }
+        setCurrentIndex(currentIndex + 1);
       }
     } catch (error) {
-      console.error('Error detallado al actualizar la tarjeta:', error);
-      if (error instanceof Error) {
-        console.error('Mensaje de error:', error.message);
-      }
+      console.error('Error al actualizar la tarjeta:', error);
     }
   };
 
@@ -180,32 +149,21 @@ export default function FlashcardsPage() {
     await loadAllFlashcards();
     const { flashcards, units } = useFlashcardStore.getState();
     
-    // Filtrar las tarjetas que toca repasar hoy o antes
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    
-    const dueCards = flashcards
-      .filter(card => {
-        // Si hay un unitId en la URL, solo mostrar tarjetas de esa unidad
-        if (currentUnitId && card.unit_id !== currentUnitId) return false;
-        
-        if (!card.next_review) return true;
-        const nextReview = new Date(card.next_review);
-        nextReview.setHours(0, 0, 0, 0);
-        const diffDays = Math.floor((nextReview.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        return diffDays <= 0;
-      })
-      .map(card => ({
-        ...card,
-        unitName: units.find(u => u.id === card.unit_id)?.name || 'Unidad desconocida'
-      }))
-      .sort((a, b) => {
-        if (!a.next_review) return -1;
-        if (!b.next_review) return 1;
-        return new Date(a.next_review).getTime() - new Date(b.next_review).getTime();
-      });
+    // Mantener las mismas tarjetas que teníamos, pero actualizar la editada
+    const updatedDueFlashcards = dueFlashcards.map(card => {
+      // Si es la tarjeta que acabamos de editar, obtener la versión actualizada
+      const updatedCard = flashcards.find(f => f.id === card.id);
+      if (updatedCard) {
+        return {
+          ...updatedCard,
+          unitName: units.find(u => u.id === updatedCard.unit_id)?.name || 'Unidad desconocida'
+        };
+      }
+      return card;
+    });
 
-    setDueFlashcards(dueCards);
+    setDueFlashcards(updatedDueFlashcards);
+    setEditingFlashcard(null);
   };
 
   const handleDeleteFlashcard = async (e: React.MouseEvent, flashcard: any) => {
@@ -213,171 +171,108 @@ export default function FlashcardsPage() {
     setDeletingFlashcard(flashcard);
   };
 
-  const handleCreateFlashcard = async () => {
-    if (!currentUnitId || !newFront.trim() || !newBack.trim()) return;
-
+  const handleDelete = async () => {
+    const { deleteFlashcard } = useFlashcardStore.getState();
     try {
-      setIsCreating(true);
-      const newCard = await createFlashcard(currentUnitId, newFront.trim(), newBack.trim());
+      await deleteFlashcard(deletingFlashcard.id);
+      await loadAllFlashcards();
+      const { flashcards } = useFlashcardStore.getState();
       
-      // Limpiar el formulario y cerrar el modal
-      setNewFront('');
-      setNewBack('');
-      setShowCreateModal(false);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
       
-      // Obtener el nombre de la unidad
-      const { units } = useFlashcardStore.getState();
-      const unitName = units.find(u => u.id === currentUnitId)?.name || 'Unidad desconocida';
+      const dueCards = flashcards
+        .filter(card => {
+          if (currentUnitId && card.unit_id !== currentUnitId) return false;
+          if (!card.next_review) return true;
+          const nextReview = new Date(card.next_review);
+          nextReview.setHours(0, 0, 0, 0);
+          const diffDays = Math.floor((nextReview.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          return diffDays <= 0;
+        });
 
-      // Añadir la nueva tarjeta a la lista existente
-      setDueFlashcards(prev => [...prev, { ...newCard, unitName }]);
+      setDueFlashcards(dueCards);
+      setDeletingFlashcard(null);
       
+      // Si no quedan tarjetas, volver al índice 0
+      if (dueCards.length === 0) {
+        router.back();
+      } else if (currentIndex >= dueCards.length) {
+        setCurrentIndex(dueCards.length - 1);
+      }
     } catch (error) {
-      console.error('Error al crear la tarjeta:', error);
-    } finally {
-      setIsCreating(false);
+      console.error('Error al eliminar:', error);
     }
-  };
-
-  const handleOpenCreateModal = () => {
-    console.log('Abriendo modal...');
-    setShowCreateModal(true);
   };
 
   return (
     <>
-      {/* Modal de crear tarjeta */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Crear nueva tarjeta</h2>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            <div className="mb-4">
-              <label htmlFor="unit" className="block text-sm font-medium text-gray-700 mb-1">
-                Unidad
-              </label>
-              <select
-                id="unit"
-                value={currentUnitId || ''}
-                onChange={(e) => setCurrentUnitId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Selecciona una unidad</option>
-                {units.map((unit) => (
-                  <option key={unit.id} value={unit.id}>
-                    {unit.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="mb-4">
-              <label htmlFor="front" className="block text-sm font-medium text-gray-700 mb-1">
-                Pregunta
-              </label>
-              <textarea
-                id="front"
-                value={newFront}
-                onChange={(e) => setNewFront(e.target.value)}
-                placeholder="Escribe la pregunta..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                rows={3}
-              />
-            </div>
-
-            <div className="mb-6">
-              <label htmlFor="back" className="block text-sm font-medium text-gray-700 mb-1">
-                Respuesta
-              </label>
-              <textarea
-                id="back"
-                value={newBack}
-                onChange={(e) => setNewBack(e.target.value)}
-                placeholder="Escribe la respuesta..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                rows={3}
-              />
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setNewFront('');
-                  setNewBack('');
-                }}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                disabled={isCreating}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleCreateFlashcard}
-                disabled={isCreating || !currentUnitId || !newFront.trim() || !newBack.trim()}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
-              >
-                {isCreating ? 'Creando...' : 'Crear tarjeta'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Contenido principal */}
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white p-8">
         {isLoading ? (
           <div className="max-w-4xl mx-auto">
-            <div className="flex justify-between items-center mb-8">
-              <button
-                onClick={handleOpenCreateModal}
-                className="inline-flex items-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                <PlusIcon className="h-5 w-5 mr-1.5" />
-                Crear tarjeta
-              </button>
+            <div className="flex justify-end mb-8">
               <StudyStats ref={statsRef} />
             </div>
             <div className="flex items-center justify-center min-h-[400px]">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             </div>
           </div>
-        ) : dueFlashcards.length === 0 ? (
+        ) : error ? (
           <div className="max-w-4xl mx-auto">
-            <div className="flex justify-between items-center mb-8">
-              <button
-                onClick={handleOpenCreateModal}
-                className="inline-flex items-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                <PlusIcon className="h-5 w-5 mr-1.5" />
-                Crear tarjeta
-              </button>
+            <div className="flex justify-end mb-8">
               <StudyStats ref={statsRef} />
             </div>
             <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Enhorabuena! Estás al día con tus tarjetas</h2>
-              <p className="text-gray-600">Puedes seguir estudiando tu temario</p>
+              <div className="text-red-500 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 mx-auto mb-2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <p>{error}</p>
+              </div>
+              <button
+                onClick={() => window.location.reload()}
+                className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Recargar página
+              </button>
+            </div>
+          </div>
+        ) : dueFlashcards.length === 0 ? (
+          <div className="max-w-4xl mx-auto">
+            <div className="flex justify-end mb-8">
+              <StudyStats ref={statsRef} />
+            </div>
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+              {showCongratulations ? (
+                <>
+                  <div className="mb-8">
+                    <div className="w-20 h-20 mx-auto mb-4">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-full h-full text-green-500">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
+                      </svg>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Enhorabuena! Has completado todas tus tarjetas de hoy</h2>
+                    <p className="text-gray-600">Sigue así para mantener tu racha de estudio</p>
+                  </div>
+                  <button
+                    onClick={() => router.push('/units')}
+                    className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    Volver a unidades
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">No hay tarjetas pendientes para hoy</h2>
+                  <p className="text-gray-600">Puedes volver mañana</p>
+                </>
+              )}
             </div>
           </div>
         ) : (
           <div className="max-w-4xl mx-auto">
-            <div className="flex justify-between items-center mb-8">
-              <button
-                onClick={handleOpenCreateModal}
-                className="inline-flex items-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                <PlusIcon className="h-5 w-5 mr-1.5" />
-                Crear tarjeta
-              </button>
+            <div className="flex justify-end mb-8">
               <StudyStats ref={statsRef} />
             </div>
             <div className="flex justify-between items-center mb-8">
@@ -400,11 +295,11 @@ export default function FlashcardsPage() {
                 <div className="px-6 py-4 border-b border-gray-100">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-500">
-                      {dueFlashcards[currentIndex].unitName}
+                      {dueFlashcards[currentIndex]?.unitName || 'Sin unidad'}
                     </span>
                     <div className="flex items-center gap-3">
                       <span className="text-sm text-gray-500">
-                        Revisión #{dueFlashcards[currentIndex].review_count || 0 + 1}
+                        Revisión #{(dueFlashcards[currentIndex]?.review_count || 0) + 1}
                       </span>
                       <div className="flex items-center gap-2 ml-2">
                         <button
@@ -441,8 +336,8 @@ export default function FlashcardsPage() {
                 >
                   <div className="min-h-[200px] flex items-center justify-center">
                     <div className="text-center max-w-2xl">
-                      <div className="text-xl font-medium text-gray-800 mb-4 leading-relaxed">
-                        {showAnswer ? dueFlashcards[currentIndex].back : dueFlashcards[currentIndex].front}
+                      <div className="text-xl font-medium text-gray-800 mb-4 leading-relaxed whitespace-pre-line">
+                        {dueFlashcards[currentIndex] && (showAnswer ? dueFlashcards[currentIndex].back : dueFlashcards[currentIndex].front)}
                       </div>
                       {!showAnswer && (
                         <div className="inline-flex items-center text-sm text-gray-500 bg-gray-50 px-4 py-2 rounded-full">
@@ -522,39 +417,7 @@ export default function FlashcardsPage() {
         <DeleteFlashcardModal
           flashcard={deletingFlashcard}
           onClose={() => setDeletingFlashcard(null)}
-          onConfirm={async () => {
-            const { deleteFlashcard } = useFlashcardStore.getState();
-            try {
-              await deleteFlashcard(deletingFlashcard.id);
-              await loadAllFlashcards();
-              const { flashcards } = useFlashcardStore.getState();
-              
-              const now = new Date();
-              now.setHours(0, 0, 0, 0);
-              
-              const dueCards = flashcards
-                .filter(card => {
-                  if (currentUnitId && card.unit_id !== currentUnitId) return false;
-                  if (!card.next_review) return true;
-                  const nextReview = new Date(card.next_review);
-                  nextReview.setHours(0, 0, 0, 0);
-                  const diffDays = Math.floor((nextReview.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                  return diffDays <= 0;
-                });
-
-              setDueFlashcards(dueCards);
-              setDeletingFlashcard(null);
-              
-              // Si no quedan tarjetas, volver al índice 0
-              if (dueCards.length === 0) {
-                router.back();
-              } else if (currentIndex >= dueCards.length) {
-                setCurrentIndex(dueCards.length - 1);
-              }
-            } catch (error) {
-              console.error('Error al eliminar:', error);
-            }
-          }}
+          onConfirm={handleDelete}
         />
       )}
     </>

@@ -11,6 +11,7 @@ export interface Profile {
   mastery_score: number
   created_at: string
   updated_at: string
+  streak_updated_today: boolean
 }
 
 export interface Unit {

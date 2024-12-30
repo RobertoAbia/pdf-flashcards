@@ -113,7 +113,7 @@ export const Flashcard = ({ id, front, back, onEdit, onDifficultyRated }: Flashc
                   </button>
                 )}
                 <div className="flex items-center justify-center h-full">
-                  <p className="text-2xl font-medium text-white text-center">
+                  <p className="text-2xl font-medium text-white text-center whitespace-pre-line">
                     {front}
                   </p>
                 </div>
@@ -146,7 +146,7 @@ export const Flashcard = ({ id, front, back, onEdit, onDifficultyRated }: Flashc
                   </button>
                 )}
                 <div className="flex items-center justify-center h-full">
-                  <p className="text-2xl font-medium text-white text-center">
+                  <p className="text-2xl font-medium text-white text-center whitespace-pre-line">
                     {back}
                   </p>
                 </div>

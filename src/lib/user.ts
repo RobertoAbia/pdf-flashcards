@@ -69,38 +69,55 @@ export async function upsertProfile(profile: Partial<Profile>) {
 
 /**
  * Actualiza el streak del usuario si es necesario
+ * @param completedAllCards - true cuando se han completado todas las tarjetas pendientes del día
  */
-export async function updateStudyStreak() {
+export async function updateStudyStreak(completedAllCards: boolean = false) {
   const profile = await getCurrentProfile()
   if (!profile) throw new Error('No profile found')
 
-  const today = new Date().toISOString().split('T')[0]
-  const lastStudyDate = profile.last_study_date?.split('T')[0]
-
-  let newStreak = profile.study_streak || 0
-
-  if (!lastStudyDate) {
-    // Primera vez que estudia
-    newStreak = 1
-  } else {
-    const daysSinceLastStudy = getDaysDifference(lastStudyDate, today)
-    
-    if (daysSinceLastStudy === 0) {
-      // Ya ha estudiado hoy, mantener la racha actual
-      newStreak = profile.study_streak
-    } else if (daysSinceLastStudy === 1) {
-      // Estudió ayer, incrementar la racha
-      newStreak += 1
-    } else {
-      // No ha estudiado en más de un día, reiniciar la racha
-      newStreak = 1
-    }
+  const today = new Date().toLocaleDateString('en-CA') // Formato YYYY-MM-DD
+  const lastStudyDate = profile.last_study_date ? 
+    new Date(profile.last_study_date).toLocaleDateString('en-CA') : 
+    null
+  
+  // Si ha completado todas las tarjetas y aún no se ha actualizado el streak hoy
+  if (completedAllCards && !profile.streak_updated_today) {
+    // Incrementar racha y marcar como actualizado hoy
+    return upsertProfile({
+      study_streak: (profile.study_streak || 0) + 1,
+      last_study_date: new Date().toISOString(),
+      streak_updated_today: true
+    })
+  } 
+  // Si no ha completado todas las tarjetas, solo actualizar la fecha
+  else {
+    return upsertProfile({
+      study_streak: profile.study_streak || 0,
+      last_study_date: new Date().toISOString(),
+      // Mantener el valor actual de streak_updated_today
+      streak_updated_today: profile.streak_updated_today
+    })
   }
+}
 
-  return upsertProfile({
-    study_streak: newStreak,
-    last_study_date: today,
-  })
+/**
+ * Reinicia el flag de streak_updated_today al comenzar un nuevo día
+ */
+export async function resetDailyStreak() {
+  const profile = await getCurrentProfile()
+  if (!profile) return
+
+  const today = new Date().toLocaleDateString('en-CA')
+  const lastStudyDate = profile.last_study_date ? 
+    new Date(profile.last_study_date).toLocaleDateString('en-CA') : 
+    null
+
+  // Si el último estudio no fue hoy, reiniciar el flag
+  if (lastStudyDate !== today) {
+    await upsertProfile({
+      streak_updated_today: false
+    })
+  }
 }
 
 // Función auxiliar para obtener la diferencia en días entre dos fechas

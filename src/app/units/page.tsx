@@ -117,9 +117,8 @@ export default function UnitsPage() {
                       </div>
                     </div>
                   </div>
-                  <ChevronRightIcon className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
                 </Link>
-                <div className="flex items-center gap-2 ml-4">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => setEditingUnit(unit)}
                     className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
@@ -137,6 +136,12 @@ export default function UnitsPage() {
                   >
                     <TrashIcon className="h-5 w-5" />
                   </button>
+                  <Link
+                    href={`/units/${unit.id}`}
+                    className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
+                  >
+                    <ChevronRightIcon className="h-5 w-5" />
+                  </Link>
                 </div>
               </div>
             </div>

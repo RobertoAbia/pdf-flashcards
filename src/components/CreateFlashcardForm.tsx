@@ -62,9 +62,10 @@ export default function CreateFlashcardForm({
               id="front"
               value={front}
               onChange={(e) => setFront(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 whitespace-pre-wrap"
               rows={3}
               placeholder="Escribe la pregunta..."
+              style={{ whiteSpace: 'pre-line' }}
             />
           </div>
 
@@ -76,9 +77,10 @@ export default function CreateFlashcardForm({
               id="back"
               value={back}
               onChange={(e) => setBack(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 whitespace-pre-wrap"
               rows={3}
               placeholder="Escribe la respuesta..."
+              style={{ whiteSpace: 'pre-line' }}
             />
           </div>
 
