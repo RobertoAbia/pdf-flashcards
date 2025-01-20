@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { UserCircleIcon, AcademicCapIcon, ClockIcon, FireIcon } from '@heroicons/react/24/outline';
+import { UserCircleIcon, AcademicCapIcon, FireIcon } from '@heroicons/react/24/outline';
 import { getCurrentProfile, upsertProfile } from '@/lib/user';
 import type { Profile } from '@/types/supabase';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -87,17 +87,6 @@ export default function ProfilePage() {
     }
   };
 
-  const formatStudyTime = () => {
-    if (!profile?.total_pomodoros_completed) return '0 horas';
-    const totalMinutes = profile.total_pomodoros_completed;
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    
-    if (totalMinutes < 60) return `${totalMinutes}m`;
-    if (minutes === 0) return `${hours}h`;
-    return `${hours}h ${minutes}m`;
-  };
-
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="bg-white/80 backdrop-blur rounded-xl shadow-lg border border-gray-200/50 hover:shadow-xl transition-all duration-300">
@@ -142,7 +131,7 @@ export default function ProfilePage() {
               <span className="text-2xl mr-3">📊</span>
               Estadísticas
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl">
                 <div className="flex items-center space-x-3 mb-2">
                   <AcademicCapIcon className="w-6 h-6 text-blue-600" />
@@ -150,15 +139,6 @@ export default function ProfilePage() {
                 </div>
                 <p className="text-2xl font-bold text-blue-600">{profile?.total_flashcards_created || 0}</p>
                 <p className="text-sm text-gray-600">tarjetas creadas</p>
-              </div>
-
-              <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-2xl">
-                <div className="flex items-center space-x-3 mb-2">
-                  <ClockIcon className="w-6 h-6 text-green-600" />
-                  <h3 className="font-semibold text-gray-800">Tiempo</h3>
-                </div>
-                <p className="text-2xl font-bold text-green-600">{formatStudyTime()}</p>
-                <p className="text-sm text-gray-600">de estudio</p>
               </div>
 
               <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-2xl">

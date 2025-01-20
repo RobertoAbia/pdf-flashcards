@@ -94,6 +94,37 @@ export default function FlashcardsPage() {
     setShowCongratulations(false);
   }, [dueFlashcards.length]);
 
+  useEffect(() => {
+    const { flashcards, units } = useFlashcardStore.getState();
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    
+    const dueCards = flashcards
+      .filter(card => {
+        // Filtrar por unidad seleccionada
+        if (currentUnitId && card.unit_id !== currentUnitId) return false;
+        
+        if (!card.next_review) return true;
+        const nextReview = new Date(card.next_review);
+        nextReview.setHours(0, 0, 0, 0);
+        const diffDays = Math.floor((nextReview.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        return diffDays <= 0;
+      })
+      .map(card => ({
+        ...card,
+        unitName: units.find(u => u.id === card.unit_id)?.name || 'Unidad desconocida'
+      }))
+      .sort((a, b) => {
+        if (!a.next_review) return -1;
+        if (!b.next_review) return 1;
+        return new Date(a.next_review).getTime() - new Date(b.next_review).getTime();
+      });
+
+    setDueFlashcards(dueCards);
+    setCurrentIndex(0);
+    setShowAnswer(false);
+  }, [currentUnitId]);
+
   const handleNext = () => {
     if (dueFlashcards.length === 0) return;
     setShowAnswer(false);
@@ -211,7 +242,26 @@ export default function FlashcardsPage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white p-8">
         {isLoading ? (
           <div className="max-w-4xl mx-auto">
-            <div className="flex justify-end mb-8">
+            <div className="flex justify-between items-center mb-8">
+              <div className="flex items-center gap-4">
+                <select
+                  value={currentUnitId || ''}
+                  onChange={(e) => {
+                    setCurrentUnitId(e.target.value || null);
+                    setCurrentIndex(0);
+                    setShowAnswer(false);
+                    router.push(e.target.value ? `?unit=${e.target.value}` : '/flashcards');
+                  }}
+                  className="px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                >
+                  <option value="">Todas las unidades</option>
+                  {units.map((unit) => (
+                    <option key={unit.id} value={unit.id}>
+                      {unit.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <StudyStats ref={statsRef} />
             </div>
             <div className="flex items-center justify-center min-h-[400px]">
@@ -220,7 +270,26 @@ export default function FlashcardsPage() {
           </div>
         ) : error ? (
           <div className="max-w-4xl mx-auto">
-            <div className="flex justify-end mb-8">
+            <div className="flex justify-between items-center mb-8">
+              <div className="flex items-center gap-4">
+                <select
+                  value={currentUnitId || ''}
+                  onChange={(e) => {
+                    setCurrentUnitId(e.target.value || null);
+                    setCurrentIndex(0);
+                    setShowAnswer(false);
+                    router.push(e.target.value ? `?unit=${e.target.value}` : '/flashcards');
+                  }}
+                  className="px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                >
+                  <option value="">Todas las unidades</option>
+                  {units.map((unit) => (
+                    <option key={unit.id} value={unit.id}>
+                      {unit.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <StudyStats ref={statsRef} />
             </div>
             <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
@@ -240,7 +309,26 @@ export default function FlashcardsPage() {
           </div>
         ) : dueFlashcards.length === 0 ? (
           <div className="max-w-4xl mx-auto">
-            <div className="flex justify-end mb-8">
+            <div className="flex justify-between items-center mb-8">
+              <div className="flex items-center gap-4">
+                <select
+                  value={currentUnitId || ''}
+                  onChange={(e) => {
+                    setCurrentUnitId(e.target.value || null);
+                    setCurrentIndex(0);
+                    setShowAnswer(false);
+                    router.push(e.target.value ? `?unit=${e.target.value}` : '/flashcards');
+                  }}
+                  className="px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                >
+                  <option value="">Todas las unidades</option>
+                  {units.map((unit) => (
+                    <option key={unit.id} value={unit.id}>
+                      {unit.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <StudyStats ref={statsRef} />
             </div>
             <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
@@ -272,7 +360,26 @@ export default function FlashcardsPage() {
           </div>
         ) : (
           <div className="max-w-4xl mx-auto">
-            <div className="flex justify-end mb-8">
+            <div className="flex justify-between items-center mb-8">
+              <div className="flex items-center gap-4">
+                <select
+                  value={currentUnitId || ''}
+                  onChange={(e) => {
+                    setCurrentUnitId(e.target.value || null);
+                    setCurrentIndex(0);
+                    setShowAnswer(false);
+                    router.push(e.target.value ? `?unit=${e.target.value}` : '/flashcards');
+                  }}
+                  className="px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                >
+                  <option value="">Todas las unidades</option>
+                  {units.map((unit) => (
+                    <option key={unit.id} value={unit.id}>
+                      {unit.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <StudyStats ref={statsRef} />
             </div>
             <div className="flex justify-between items-center mb-8">
