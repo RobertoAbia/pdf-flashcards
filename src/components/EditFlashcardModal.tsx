@@ -86,7 +86,7 @@ export default function EditFlashcardModal({ flashcard, onClose, onSuccess }: Ed
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form id="editFlashcardForm" onSubmit={handleSubmit} className="space-y-6">
             {/* Selector de unidad */}
             <div>
               <label htmlFor="unit" className="block text-sm font-medium text-gray-700 mb-2">
@@ -156,7 +156,7 @@ export default function EditFlashcardModal({ flashcard, onClose, onSuccess }: Ed
             </button>
             <button
               type="submit"
-              form="form"
+              form="editFlashcardForm"
               disabled={isLoading}
               className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
             >
