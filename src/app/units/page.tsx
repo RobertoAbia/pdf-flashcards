@@ -97,23 +97,30 @@ export default function UnitsPage() {
                       <p className="text-sm text-gray-500 mt-1">{unit.description}</p>
                     )}
                     <div className="flex gap-4 mt-2">
-                      <div className="flex items-center">
-                        <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-medium bg-green-100 text-green-800 rounded">
-                          {getFlashcardCountsByDifficulty(unit.id).easy}
-                        </span>
-                        <span className="text-xs text-gray-500 ml-1">Fácil</span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">
-                          {getFlashcardCountsByDifficulty(unit.id).medium}
-                        </span>
-                        <span className="text-xs text-gray-500 ml-1">Media</span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-medium bg-red-100 text-red-800 rounded">
-                          {getFlashcardCountsByDifficulty(unit.id).hard}
-                        </span>
-                        <span className="text-xs text-gray-500 ml-1">Difícil</span>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center">
+                          <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-medium bg-green-100 text-green-800 rounded">
+                            {unit.easy_cards_count}
+                          </span>
+                          <span className="ml-1 text-sm text-gray-500">Fácil</span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">
+                            {unit.medium_cards_count}
+                          </span>
+                          <span className="ml-1 text-sm text-gray-500">Media</span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-medium bg-red-100 text-red-800 rounded">
+                            {unit.hard_cards_count}
+                          </span>
+                          <span className="ml-1 text-sm text-gray-500">Difícil</span>
+                        </div>
+                        <div className="flex items-center border-l pl-4 ml-2">
+                          <span className="inline-flex items-center justify-center px-2.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                            {unit.easy_cards_count + unit.medium_cards_count + unit.hard_cards_count} tarjetas
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>

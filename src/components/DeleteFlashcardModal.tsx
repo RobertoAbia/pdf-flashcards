@@ -1,6 +1,7 @@
 'use client';
 
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 interface DeleteFlashcardModalProps {
   flashcard: any;
@@ -9,6 +10,9 @@ interface DeleteFlashcardModalProps {
 }
 
 export default function DeleteFlashcardModal({ flashcard, onClose, onConfirm }: DeleteFlashcardModalProps) {
+  // Usar el hook para cerrar con Escape
+  useEscapeKey(onClose);
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">

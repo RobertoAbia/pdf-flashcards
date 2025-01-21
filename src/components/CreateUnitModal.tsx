@@ -6,6 +6,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
 import { createUnit } from '@/lib/units';
 import { useFlashcardStore } from '@/store/flashcards';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 interface CreateUnitModalProps {
   onClose: () => void;
@@ -17,6 +18,9 @@ export default function CreateUnitModal({ onClose }: CreateUnitModalProps) {
   const [unitData, setUnitData] = useState({ name: '', description: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Usar el hook para cerrar con Escape
+  useEscapeKey(onClose);
 
   const handleCreateUnit = async () => {
     try {

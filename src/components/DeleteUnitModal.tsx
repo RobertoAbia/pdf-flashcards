@@ -2,6 +2,7 @@
 
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Unit } from '@/types/supabase';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 interface DeleteUnitModalProps {
   unit: Unit;
@@ -10,6 +11,9 @@ interface DeleteUnitModalProps {
 }
 
 export default function DeleteUnitModal({ unit, onClose, onConfirm }: DeleteUnitModalProps) {
+  // Usar el hook para cerrar con Escape
+  useEscapeKey(onClose);
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">

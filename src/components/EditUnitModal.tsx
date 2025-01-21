@@ -5,6 +5,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
 import { updateUnit } from '@/lib/units';
 import { useFlashcardStore } from '@/store/flashcards';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 interface EditUnitModalProps {
   unit: {
@@ -24,6 +25,9 @@ export default function EditUnitModal({ unit, onClose }: EditUnitModalProps) {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Usar el hook para cerrar con Escape
+  useEscapeKey(onClose);
 
   const handleEditUnit = async () => {
     try {
